@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaokang.mappers.StudentMapper">
+	<!-- type为集合中的元素类型,property为实体类中的属性，column为数据库表中的字段名.id下面的select用 -->
+	<!-- <resultMap type="Student" id="StudentResult"> <id property="id" column="id" 
+		/> <result property="name" column="name" /> <result property="age" column="age" 
+		/> <result property="status" column="status" /> 对象级联方式映射一对一关系(不推荐，重用性不强) 
+		<result property="address.id" column="addressId" /> <result property="address.sheng" 
+		column="sheng" /> <result property="address.shi" column="shi" /> <result 
+		property="address.qu" column="qu" /> </resultMap> -->
+
+	<!-- <resultMap type="Address" id="AddressResult"> <id property="id" column="id" 
+		/> <result property="sheng" column="sheng" /> <result property="shi" column="shi" 
+		/> <result property="qu" column="qu" /> </resultMap> <resultMap type="Student" 
+		id="StudentResult"> <id property="id" column="id" /> <result property="name" 
+		column="name" /> <result property="age" column="age" /> <result property="status" 
+		column="status" /> <association property="address" resultMap="AddressResult" 
+		/> </resultMap> -->
+	<!-- 开启二级缓存需要实体类序列化 -->
+	<!-- 二级缓存 1. size:表示缓存cache中容纳的最大元素数，默认是1024 2.flushInterval:定义缓存刷新周期，以毫秒计算 
+		3.eviction:定义缓存移除机制，默认是LRU(Least recently used，最近最少使用),还有FIFO(First in first 
+		out) 4.readOnly:默认值是false,假如是true的话那么缓存只能读。 -->
+	<!-- 也就是select用到二级缓存 -->
+	<cache size="1024" flushInterval="60000" eviction="LRU"
+		readOnly="false" />
+
+	<resultMap type="Student" id="StudentResult">
+		<id property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="age" column="age" />
+		<result property="status" column="status" />
+		<!-- 此处的column为t_student表中的外键 -->
+		<association property="address" column="addressId"
+			select="com.xiaokang.mappers.AddressMapper.findById" />
+		<!-- 此处的column为t_student表中的外键 -->
+		<association property="grade" column="gradeId"
+			select="com.xiaokang.mappers.GradeMapper.findById" />
+	</resultMap>
+
+	<!-- id就是接口中的方法名,parameterType就是方法中的参数类型 -->
+	<insert id="add" parameterType="Student">
+		insert into t_student
+		values(null,#{name},#{age})
+	</insert>
+
+	<update id="update" parameterType="Student">
+		update t_student set
+		name=#{name},age=#{age} where id=#{id}
+	</update>
+
+	<delete id="delete" parameterType="Integer">
+		update t_student set status=1
+		where id=#{id}
+	</delete>
+
+	<select id="findById" parameterType="Integer"
+		resultType="Student">
+		select * from t_student where id=#{id}
+	</select>
+
+	<select id="findByGradeId" parameterType="Integer"
+		resultMap="StudentResult">
+		select * from t_student where
+		gradeId=#{gradeId}
+	</select>
+
+	<select id="findAll" resultMap="StudentResult">
+		select * from
+		t_student
+	</select>
+
+	<select id="findAllWithMap" resultMap="StudentResult">
+		select * from t_student
+	</select>
+
+	<select id="findStudentWithAddressAndGrade"
+		parameterType="Integer" resultMap="StudentResult">
+		select * from
+		t_student s,t_address a
+		where s.addressId=a.id
+		and s.id=#{id}
+	</select>
+
+	<!-- 逻辑分页 select默认使用cache,不清空缓存 -->
+	<select id="findStudents" resultMap="StudentResult"
+		flushCache="false" useCache="true">
+		select * from
+		t_student
+	</select>
+	<!-- 物理分页 -->
+	<select id="findStudents2" parameterType="Map"
+		resultMap="StudentResult">
+		select * from
+		t_student
+		<if test="start!=null and size!=null">
+			limit #{start},#{size}
+		</if>
+	</select>
+
+	<select id="studentTotalCount" resultType="int">
+		select count(1) from
+		t_student
+	</select>
+
+</mapper>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaokang.mappers.GradeMapper">
+	<resultMap type="Grade" id="GradeResult">
+		<id property="id" column="id" />
+		<result property="gradeName" column="gradeName" />
+		<!-- 这里传入的是t_grade表的主键 -->
+		<collection property="students" column="id"
+			select="com.xiaokang.mappers.StudentMapper.findByGradeId"></collection>
+	</resultMap>
+
+	<select id="findById" parameterType="Integer"
+		resultMap="GradeResult">
+		select
+		* from t_grade where id=#{id}
+	</select>
+</mapper>
